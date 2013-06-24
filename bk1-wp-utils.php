@@ -23,6 +23,12 @@
 
 function bk1_debug($var){
 
+   global $bk1_is_production;
+
+   if (isset($bk1_is_production) AND $bk1_is_production){
+	  return;
+   }
+   
    $result = var_export( $var, true );
 
    $trace = debug_backtrace();
