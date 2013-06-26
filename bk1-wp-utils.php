@@ -1,34 +1,32 @@
 <?php
 /**
- * Twenty Twelve functions and definitions.
+ * Various Utilities for wordpress and other php projects
  *
- * Sets up the theme and provides some helper functions, which are used
- * in the theme as custom template tags. Others are attached to action and
- * filter hooks in WordPress to change core functionality.
- *
- * When using a child theme (see http://codex.wordpress.org/Theme_Development and
- * http://codex.wordpress.org/Child_Themes), you can override certain functions
- * (those wrapped in a function_exists() call) by defining them first in your child theme's
- * functions.php file. The child theme's functions.php file is included before the parent
- * theme's file, so the child theme functions would be used.
- *
- * Functions that are not pluggable (not wrapped in function_exists()) are instead attached
- * to a filter or action hook.
- *
- * For more information on hooks, actions, and filters, see http://codex.wordpress.org/Plugin_API.
- *
- * @package WordPress
- * @subpackage Overseer
+ * Author: Angelo D'Ambrosio
+ * Version: 1.2
  */
 
-function bk1_debug($var){
+global $bk1_debug_state;
+$bk1_debug_state = true;
 
-   global $bk1_is_production;
+function bk1_debug($var, $override){
 
-   if (isset($bk1_is_production) AND $bk1_is_production){
+   global $bk1_debug_state;
+
+   $override = strtolower((string)$override);
+
+   if (in_array($override, ['off', false, 0] )){
 	  return;
    }
-   
+   elseif ( in_array($override, ['on', true, 1] ) ){
+
+   }
+   else {
+	  if (in_array($bk1_debug_state, ['on', true, 1])){
+		 return;
+	  }
+   }
+
    $result = var_export( $var, true );
 
    $trace = debug_backtrace();
@@ -39,6 +37,22 @@ function bk1_debug($var){
    if (is_object($object)) { $object = get_class($object); }
 
    error_log("Line $line ".($object?"of object $object":"")."(in $file):\n$result");
+}
+
+function bk1_set_debug_state($state){
+
+   global $bk1_debug_state;
+
+   $state = strtolower((string)$state);
+   if (in_array($state, ['on', true, 1] )){
+	  $bk1_debug_state = true;
+   }
+   elseif (in_array($state, ['off', false, 0] )){
+	  $bk1_debug_state = false;
+   }
+   else {
+	  trigger_error("Wrong argument for 'bk1_set_debug_state', expected ['on', true, 1] or ['off', false, 0]");
+   }
 }
 
 
