@@ -3,57 +3,89 @@
  * Various Utilities for wordpress and other php projects
  *
  * Author: Angelo D'Ambrosio
- * Version: 1.2
+ * Version: 1.3
  */
 
-global $bk1_debug_state;
-$bk1_debug_state = true;
+class bk1_debug{
+   private static $state 		= true;
+   private static $buffer 		= '';
+   private static $last_time 	= null;
+   private static $print_always = false;
 
-function bk1_debug($var, $override){
+   public static function state_set($state){
 
-   global $bk1_debug_state;
-
-   $override = strtolower((string)$override);
-
-   if (in_array($override, ['off', false, 0] )){
-	  return;
-   }
-   elseif ( in_array($override, ['on', true, 1] ) ){
-
-   }
-   else {
-	  if (in_array($bk1_debug_state, ['on', true, 1])){
-		 return;
+	  $state = strtolower((string)$state);
+	  if ($state === 'on' OR $state === true){
+		 self :: $state = true;
+	  }
+	  elseif ($state === 'off' OR $state === false){
+		 self :: $state = false;
+	  }
+	  else {
+		 trigger_error("Wrong argument for 'bk1_set_debug_state', expected 'on' or 'off'");
 	  }
    }
 
-   $result = var_export( $var, true );
+   public static function print_always_set($state){
 
-   $trace = debug_backtrace();
-   $level = 1;
-   @$file   = $trace[$level]['file'];
-   @$line   = $trace[$level]['line'];
-   @$object = $trace[$level]['object'];
-   if (is_object($object)) { $object = get_class($object); }
+	  $state = strtolower((string)$state);
+	  if ($state === 'on' OR $state === true){
+		 self::$print_always = true;
+	  }
+	  elseif ($state === 'off' OR $state === false){
+		 self::$print_always = false;
+	  }
+	  else {
+		 trigger_error("Wrong argument for 'self::print_always_set()', expected 'on' or 'off'");
+	  }
 
-   error_log("Line $line ".($object?"of object $object":"")."(in $file):\n$result");
+   }
+
+   public static function log($var, $override = null){
+
+	  if (isset($override)){
+		 $override = strtolower($override);
+		 if ( $override === 'off' OR $override == false ){
+			return;
+		 }
+		 elseif ( $override === 'on' OR $override == true ){
+		 }
+	  }
+	  else {
+		 if (self::$state === false){
+			return;
+		 }
+	  }
+
+	  $result = var_export( $var, true );
+
+	  $trace 	= debug_backtrace();
+	  $level 	= 1;
+	  @$file   	= $trace[$level]['file'];
+	  @$line   	= $trace[$level]['line'];
+	  @$object 	= $trace[$level]['object'];
+	  if (is_object($object)) { $object = get_class($object); }
+
+	  self::$buffer .= "\n---- time: ".date(DATE_RSS, time()) . (self::$last_time ? ' ---- duration: '.round((microtime(true) - self::$last_time), 5) : '') ."----\n";
+
+	  self::$buffer .= "Line $line ".($object?"of object $object":"")."(in $file):\n$result\n";
+
+	  self::$last_time = microtime(true);
+
+	  if (self::$print_always){
+		 self::log_print();
+	  }
+   }
+
+   public static function log_print(){
+
+	  if (self::$state){
+		 error_log(self::$buffer);
+	  }
+
+	  self::$buffer = '';
+	  self::$last_time = null;
+   }
 }
-
-function bk1_set_debug_state($state){
-
-   global $bk1_debug_state;
-
-   $state = strtolower((string)$state);
-   if (in_array($state, ['on', true, 1] )){
-	  $bk1_debug_state = true;
-   }
-   elseif (in_array($state, ['off', false, 0] )){
-	  $bk1_debug_state = false;
-   }
-   else {
-	  trigger_error("Wrong argument for 'bk1_set_debug_state', expected ['on', true, 1] or ['off', false, 0]");
-   }
-}
-
 
 ?>
